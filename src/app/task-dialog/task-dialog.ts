@@ -28,13 +28,22 @@ export interface TaskDialogResult {
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <h2 id="dialog-title">{{ task() ? 'Editar tarea' : 'Nueva tarea' }}</h2>
 
-        <label class="field">
-          <span>Título</span>
-          <input formControlName="title" maxlength="80" autocomplete="off" />
-          @if (form.controls.title.touched && form.controls.title.invalid) {
-            <small class="field__error">El título es obligatorio.</small>
+        <!-- El error va fuera del <label> y se enlaza con aria-describedby,
+             así el lector de pantalla lee "Título" como nombre y el error como descripción. -->
+        <div class="field">
+          <label for="task-title"><span>Título</span></label>
+          <input
+            id="task-title"
+            formControlName="title"
+            maxlength="80"
+            autocomplete="off"
+            [attr.aria-invalid]="titleError()"
+            [attr.aria-describedby]="titleError() ? 'task-title-error' : null"
+          />
+          @if (titleError()) {
+            <small id="task-title-error" class="field__error">El título es obligatorio.</small>
           }
-        </label>
+        </div>
 
         <label class="field">
           <span>Descripción</span>
@@ -112,6 +121,11 @@ export class TaskDialog {
       });
       this.dialogRef().nativeElement.showModal();
     });
+  }
+
+  protected titleError(): boolean {
+    const c = this.form.controls.title;
+    return c.touched && c.invalid;
   }
 
   protected submit(): void {
