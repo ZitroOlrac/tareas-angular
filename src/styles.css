@@ -577,7 +577,8 @@ textarea:focus {
   display: grid;
   gap: 0.3rem;
 }
-.field > span {
+.field > span,
+.field > label > span {
   font-size: 0.85rem;
   font-weight: 600;
 }
