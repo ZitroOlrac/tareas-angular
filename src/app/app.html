@@ -1,0 +1,145 @@
+<div class="layout" [class.layout--menu-open]="menuOpen()">
+  <aside class="sidebar" aria-label="Tableros">
+    <div class="brand">
+      <span class="brand__logo" aria-hidden="true">▦</span>
+      <span>Tareas</span>
+    </div>
+
+    <h2 class="sidebar__title">Mis tableros</h2>
+    <nav>
+      <ul class="boards">
+        @for (b of store.boards(); track b.id) {
+          <li>
+            <button
+              type="button"
+              class="boards__item"
+              [class.boards__item--active]="b.id === store.activeBoard().id"
+              [attr.aria-current]="b.id === store.activeBoard().id ? 'page' : null"
+              (click)="selectBoard(b.id)"
+            >
+              {{ b.name }}
+              <span class="boards__count">{{ taskCount(b) }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <form class="new-board" (ngSubmit)="createBoard()">
+      <label for="new-board" class="sr-only">Nombre del nuevo tablero</label>
+      <input
+        id="new-board"
+        name="newBoard"
+        [(ngModel)]="newBoard"
+        placeholder="Nuevo tablero…"
+        maxlength="40"
+      />
+      <button type="submit" class="btn btn--primary btn--sm" [disabled]="!newBoard.trim()">
+        Crear
+      </button>
+    </form>
+
+    <button type="button" class="link sidebar__reset" (click)="store.resetDemo()">
+      Restaurar datos de ejemplo
+    </button>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button
+        type="button"
+        class="icon-btn menu-toggle"
+        (click)="menuOpen.set(!menuOpen())"
+        aria-label="Abrir tableros"
+      >
+        ☰
+      </button>
+
+      <div class="topbar__title">
+        @if (renaming()) {
+          <input
+            class="title-input"
+            [value]="store.activeBoard().name"
+            (keydown.enter)="rename($any($event.target).value)"
+            (keydown.escape)="renaming.set(false)"
+            (blur)="rename($any($event.target).value)"
+            aria-label="Nombre del tablero"
+            maxlength="40"
+            appAutofocus
+          />
+        } @else {
+          <h1>{{ store.activeBoard().name }}</h1>
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="renaming.set(true)"
+            aria-label="Renombrar tablero"
+          >
+            ✎
+          </button>
+        }
+        @if (store.boards().length > 1) {
+          @if (confirmDeleteBoard()) {
+            <button type="button" class="link link--danger" (click)="deleteBoard()">
+              ¿Borrar tablero?
+            </button>
+            <button type="button" class="link" (click)="confirmDeleteBoard.set(false)">No</button>
+          } @else {
+            <button
+              type="button"
+              class="icon-btn"
+              (click)="confirmDeleteBoard.set(true)"
+              aria-label="Borrar tablero"
+            >
+              🗑
+            </button>
+          }
+        }
+      </div>
+
+      <div class="progress" [attr.aria-label]="'Progreso: ' + percent() + '%'">
+        <div class="progress__bar"><span [style.width.%]="percent()"></span></div>
+        <span class="progress__text"
+          >{{ store.progress().done }}/{{ store.progress().total }} hechas</span
+        >
+      </div>
+    </header>
+
+    <div class="filters" role="search">
+      <input
+        type="search"
+        class="filters__search"
+        placeholder="Buscar tareas…"
+        aria-label="Buscar tareas"
+        [ngModel]="store.filter().query"
+        (ngModelChange)="setQuery($event)"
+      />
+      <div class="chips" role="group" aria-label="Filtrar por prioridad">
+        <button
+          type="button"
+          class="chip"
+          [class.chip--on]="store.filter().priority === 'todas'"
+          (click)="setPriority('todas')"
+        >
+          Todas
+        </button>
+        @for (p of priorities; track p[0]) {
+          <button
+            type="button"
+            class="chip chip--{{ p[0] }}"
+            [class.chip--on]="store.filter().priority === p[0]"
+            [attr.aria-pressed]="store.filter().priority === p[0]"
+            (click)="setPriority(p[0])"
+          >
+            {{ p[1] }}
+          </button>
+        }
+      </div>
+      @if (store.isFiltering()) {
+        <span class="filters__hint">Arrastrar está desactivado mientras filtras</span>
+      }
+    </div>
+
+    <app-board />
+  </main>
+</div>
